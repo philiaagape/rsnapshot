@@ -76,6 +76,14 @@ snapshot_root	/.snapshots/
 #
 #cmd_postexec	/path/to/postexec/script
 
+# Paths to lvcreate, lvremove, mount and umount commands, for use with
+# Linux LVMs.
+#
+#linux_lvm_cmd_lvcreate	@CMD_LVCREATE@
+#linux_lvm_cmd_lvremove	@CMD_LVREMOVE@
+#linux_lvm_cmd_mount	@CMD_MOUNT@
+#linux_lvm_cmd_umount	@CMD_UMOUNT@
+
 #########################################
 #     BACKUP LEVELS / INTERVALS         #
 # Must be unique and in ascending order #
@@ -117,6 +125,12 @@ loglevel	3
 # writable. Otherwise anyone can prevent the program from running.
 #
 lockfile	/var/run/rsnapshot.pid
+
+# By default, rsnapshot check lockfile, check if PID is running
+# and if not, consider lockfile as stale, then start
+# Enabling this stop rsnapshot if PID in lockfile is not running
+#
+#stop_on_stale_lockfile		0
 
 # Default rsync args. All rsync commands have at least these options set.
 #
@@ -184,6 +198,26 @@ lockfile	/var/run/rsnapshot.pid
 #
 #rsync_numtries 0
 
+# LVM parameters. Used to backup with creating lvm snapshot before backup
+# and removing it after. This should ensure consistency of data in some special
+# cases
+#
+# LVM snapshot(s) size (lvcreate --size option).
+#
+#linux_lvm_snapshotsize	100M
+
+# Name to be used when creating the LVM logical volume snapshot(s).
+#
+#linux_lvm_snapshotname	rsnapshot
+
+# Path to the LVM Volume Groups.
+#
+#linux_lvm_vgpath	/dev
+
+# Mount point to use to temporarily mount the snapshot(s).
+#
+#linux_lvm_mountpath	/path/to/mount/lvm/snapshot/during/backup
+
 ###############################
 ### BACKUP POINTS / SCRIPTS ###
 ###############################
@@ -197,14 +231,16 @@ backup	/usr/local/	localhost/
 #backup	/home/foo/My Documents/		localhost/
 #backup	/foo/bar/	localhost/	one_fs=1, rsync_short_args=-urltvpog
 #backup_script	/usr/local/bin/backup_pgsql.sh	localhost/postgres/
+# You must set linux_lvm_* parameters below before using lvm snapshots
+#backup	lvm://vg0/xen-home/	lvm-vg0/xen-home/
 
 # EXAMPLE.COM
-#backup_script	/bin/date "+ backup of example.com started at %c"	unused1
+#backup_exec	/bin/date "+ backup of example.com started at %c"
 #backup	root@example.com:/home/	example.com/	+rsync_long_args=--bwlimit=16,exclude=core
 #backup	root@example.com:/etc/	example.com/	exclude=mtab,exclude=core
-#backup_script	ssh root@example.com "mysqldump -A > /var/db/dump/mysql.sql"	unused2
+#backup_exec	ssh root@example.com "mysqldump -A > /var/db/dump/mysql.sql"
 #backup	root@example.com:/var/db/dump/	example.com/
-#backup_script	/bin/date "+ backup of example.com ended at %c"	unused9
+#backup_exec	/bin/date "+ backup of example.com ended at %c"
 
 # CVS.SOURCEFORGE.NET
 #backup_script	/usr/local/bin/backup_rsnapshot_cvsroot.sh	rsnapshot.cvs.sourceforge.net/
